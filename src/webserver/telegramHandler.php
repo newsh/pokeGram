@@ -167,6 +167,7 @@ function buildPreviewLink($pokemon_id) {//Returns url for pokemon's picture in w
 	//$url = "http://domainToYourPicsOrGifs";
 	//$url .= $pokemon_id . ".gif";  //Build link will look like "http://sprites.pokecheck.org/i/006.gif" with incoming id of '6'.
 	//return $url;
+	return ".";  //Returning empty string would cause 400:Bad request. 
 }
 function getPokemonsNameById($pokemon_id, $lang) { //Returns Pokemons name in user's language by Id.
 	

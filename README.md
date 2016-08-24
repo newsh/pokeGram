@@ -3,7 +3,7 @@ Share your Pokemon Go Scanner data the easy way!
 
 This Telegram chatbot will message you and others on mobile devices as soon as your scanner finds a pokemon.
 
-No port forwarding needed, no ngrok _too many connections_, no clunky web brwoser handling on mobile.
+No port forwarding needed, no ngrok _too many connections_, no clunky web browser handling on mobile.
 
 
 Use it for yourself, share it with your friends or whole neighborhood. No additional app required for receiving messages.
