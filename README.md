@@ -11,7 +11,7 @@ The more scanners the bot is linked with, the better it becomes.
 
 
 
-## Feature list
+## Features
 * Receive a message for spotted Pokemon including street name, how far away it is, time to get there (by bike or foot), time till it disappears
 * Request a map of Pokemons position
 * Add pokemon to your filter and don't get notifications for them
@@ -20,7 +20,7 @@ The more scanners the bot is linked with, the better it becomes.
 * and more
 
 ## Preview
-To see an example of this bot in action you can simply add [@pkgo13347_bot](https://telegram.me/pkgo13347_bot) to your Telegram contacts.
+To see an example of this bot in action you can simply add [@PokegramBerlinBot](https://telegram.me/PokegramBerlinBot) to your Telegram contacts.
 
 
  ![picture2 of telegram_bot](http://i.imgur.com/OkdZGvO.jpg) ![picture3 of telegram_bot](http://i.imgur.com/NubS9HJ.jpg)
@@ -28,5 +28,5 @@ To see an example of this bot in action you can simply add [@pkgo13347_bot](http
  
  ![picture1 of telegram_bot](http://i.imgur.com/vYFCmHO.jpg) ![picture4 of telegram_bot](http://i.imgur.com/X7420Jn.jpg)
 
-## Setting up Telegram bot
-See [instructions] (later) for a guide to get your own bot running.
+## Installation
+See [instructions] (/docs/instructions.md) for a guide to get your own bot running.
