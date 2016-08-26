@@ -98,10 +98,14 @@ function getTravelData($chat_id, $latitude, $longitude, $mode) {
 		$mode = "walking";
 	else if($mode == 2)
 		$mode = "bycicling";
+
+	$userLocation = getUsersLocation($chat_id);
+	$userPosLat = $userLocation["lat"];
+	$userPosLong = $userLocation["long"];
 	
-	$homeCoordinates = getUsersLocation($chat_id);
 	$apiKey = getUsersApiKey($chat_id);
-	$urlAPI = "https://maps.googleapis.com/maps/api/distancematrix/json?origins=$homeCoordinates&destinations=$latitude,$longitude&key=$apiKey&mode=$mode";
+	$urlAPI = "https://maps.googleapis.com/maps/api/distancematrix/json?origins=$userPosLat,$userPosLong&destinations=$latitude,$longitude&key=$apiKey&mode=$mode";
+	echo $urlAPI;
 	$response = file_get_contents($urlAPI);
 	incrementApiCounter($chat_id); //Tracking mechanism how many calls to google's maps matrix are made. Limit at 2,500 / day
 	$json = json_decode($response);
