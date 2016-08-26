@@ -1,12 +1,13 @@
 <?php
 
-define ( 'BOT_TOKEN', 'XXXX' );  //Get this from @BotFather by typing /token.
+$ini_array = parse_ini_file("config.ini");
+define ( 'BOT_TOKEN', $ini_array['BOT_TOKEN'] );
 define ( 'API_URL', 'https://api.telegram.org/bot' . BOT_TOKEN . '/' );
-define ( 'WEBHOOK_ADDRESS', 'Your webhook for handler goes here if wished'); //Put URL of your telegramHandler.php here -if wished. It will help others to link their scanners.
-define ( 'DSN', 'mysql:host=XXXX' ); //Address of database.
-define ( 'dbname', 'XXXX' ); //Db name you chose.
-define ( 'username', 'XXXX' ); //Db username you chose.
-define ( 'password', 'XXXXXX' ); //Db password you chose.
+define ( 'DSN', 'mysql:host='.$ini_array['mysql:host'] );
+define ( 'dbname', $ini_array['dbname'] );
+define ( 'username', $ini_array['username'] );
+define ( 'password', $ini_array['password'] );
+define ( 'WEBHOOK_ADDRESS', $ini_array['WEBHOOK_ADDRESS']);
 
 function exec_curl_request($handle) {
 	$response = curl_exec ( $handle );
@@ -555,7 +556,7 @@ function processMessage($message) {  //Process incoming message.
 			messageUser($chat_id, "<i>This function is optional</i>.%0AI can tell you how far away pokemon are and the time it will take you to get there.%0A%0AYou have to allow this bot to receive your location once and provide a Google Maps API Key.%0A%0AYou can get your own Google Maps API Key by following this easy <a href=\"https://pgm.readthedocs.io/en/develop/basic-install/google-maps.html\"> Guide</a>. This bot uses the Distance Matrix API, which can be called 2500 times per day. Use the Pokemon Filter Settings and you shouldn't reach this limit. Use /api for your current API usage from this bot. /cancel");
 		}
 		else if($text == "/about") {
-			messageUser($chat_id, "This bot will tell you about pokemons nearby, reported by other people.%0A%0ADo you have a scanner running or know anyone running a scanner for this specific area using <a href=\"https://github.com/PokemonGoMap/PokemonGo-Map\">PokemonGo Map</a>?%0A%0AYou can make this bot even better by sharing what your scanner found. You only need to add %0A%0A<code>" . WEBHOOK_ADDRESS . "</code>%0A%0Aas a webhook to your config.ini file.%0A%0AWant to create your own bot for your area? See <a href=\"https://github.com/newsh/pokeGram\">here</a> how to do it.");
+			messageUser($chat_id, "This bot will tell you about pokemons nearby, reported by other people.%0A%0ADo you have a scanner running or know anyone running a scanner for this specific area using <a href=\"https://github.com/PokemonGoMap/PokemonGo-Map\">PokemonGo Map</a>?%0A%0AYou can make this bot even better by sharing what your scanner found.%0A%0AWant to create your own bot for your area? See <a href=\"https://github.com/newsh/pokeGram\">here</a> how to do it.");
 		}
 		else if($text == "/apion") {
 			setApiFlag($chat_id , 1);

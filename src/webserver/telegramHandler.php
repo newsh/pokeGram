@@ -1,15 +1,17 @@
 <?php
 
-define ( 'BOT_TOKEN', 'XXXX' ); //Get this from @BotFather by typing /token.
+$ini_array = parse_ini_file("config.ini");
+//date_default_timezone_set($ini_array['TIMEZONE']);
+define ( 'BOT_TOKEN', $ini_array['BOT_TOKEN'] ); 
 define ( 'API_URL', 'https://api.telegram.org/bot' . BOT_TOKEN . '/' );
-define ( 'DSN', 'mysql:host=XXXX' ); //Address of database.
-define ( 'dbname', 'XXXX' ); //Db name you chose.
-define ( 'username', 'XXXX' ); //Db username you chose.
-define ( 'password', 'XXXXXX' ); //Db password you chose.
-define ( 'MAXLATITUDE', 'XXXX'); //Following MAX/MIN values for latitude and longitude are optional to set. Set these values if you wish to sanatize data provided by other people scanners. It will filter all pokemons outside of the parameters you provide. Check min/max lat/long values on google maps for your city/area.
-define ( 'MINLATITUDE', 'XXXX');
-define ( 'MAXLONGITUDE', 'XXXX');
-define ( 'MINLONGITUDE', 'XXXX');
+define ( 'DSN', 'mysql:host='.$ini_array['mysql:host'] ); 
+define ( 'dbname', $ini_array['dbname'] ); 
+define ( 'username', $ini_array['username'] );
+define ( 'password', $ini_array['password'] );
+define ( 'MAXLATITUDE', $ini_array['MAXLATITUDE']);
+define ( 'MINLATITUDE', $ini_array['MINLATITUDE']);
+define ( 'MAXLONGITUDE', $ini_array['MAXLONGITUDE']);
+define ( 'MINLONGITUDE', $ini_array['MINLONGITUDE']);
 define ( 'TIME_OFFSET', 2); //Add or substract (place negative number) time in hours if disappear time doesn't match your region. ('2'=> Timezone berlin/germany).
 
 function exec_curl_request($handle) {
@@ -210,10 +212,9 @@ function incrementApiCounter($chat_id) {
 	$stmt->execute();
 }
 function buildPreviewLink($pokemon_id) {//Returns url for pokemon's picture in web-preview.
-	$url = "http://newsh.de/youwerenotsupposedtobehere/";
-	$url .= $pokemon_id . ".gif";  //Build link will look like "http://sprites.pokecheck.org/i/006.gif" with incoming id of '6'.
-	return $url;
-
+	//$url = "http://domainToYourPicsOrGifs";
+	//$url .= $pokemon_id . ".gif";  //Build link will look like "http://domainToYourPicsOrGifs/006.gif" with incoming id of '6'.
+	return ".";
 }
 function getPokemonsNameById($pokemon_id, $lang) { //Returns Pokemons name in user's language by Id.
 	

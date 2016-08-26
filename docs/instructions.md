@@ -19,10 +19,10 @@ What you need to get this running:
 
 ###3. Upload bot scripts to webserver
 
- Upload [pokeGramBot.php] (/src/webserver) and [telegramHandler.php] (/src/webserver) to your webserver where they can be reached.
+ Create a folder on your webserver and upload these [files] (/src/webserver). Both .php files need to be accessible.
 ###4.  Configure your settings
 
- Edit first lines in _pokeGramBot.php_ and _telegramHandler.php_ **_both_** by replacing 'XXXX' with your credentials.
+ Edit _config.ini_ and fill in your credentials.
 ###4. Set a webhook
  Set a webhook by opening 
  
