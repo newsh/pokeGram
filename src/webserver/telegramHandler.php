@@ -107,14 +107,14 @@ function getTravelData($chat_id, $latitude, $longitude, $mode) {
 	$json = json_decode($response);
 	return $json;
 }
-function getUsersLocation($chat_id) {
+function getUsersLocation($chat_id) { //Returns array with user's lat/long coordinates.
 	$db = new PDO ( DSN . ';dbname=' . dbname, username, password );
 	$stmt = $db->prepare("SELECT pos_latitude, pos_longitude FROM user_data WHERE chat_id LIKE :chat_id");
 	$stmt->bindValue(':chat_id', $chat_id);
 	$stmt->execute();
 	
 	$resultRow = $stmt->fetch ( PDO::FETCH_ASSOC );
-	return $resultRow['pos_latitude'] . "," . $resultRow['pos_longitude'];
+	return array("lat"=>$resultRow['pos_latitude'],"long"=>$resultRow['pos_longitude']);
 }
 function userPokemonFilterActivated($user, $pokemon_id) { //Returns true if detected Pokemon is hidden by user.
 	$db = new PDO ( DSN . ';dbname=' . dbname, username, password );
