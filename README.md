@@ -30,3 +30,7 @@ To see an example of this bot in action you can simply add [@PokegramBerlinBot](
 
 ## Installation
 See [instructions] (/docs/instructions.md) for a guide to get your own bot running.
+
+## Updating
+Once you have this chat bot running, updating is really easy.
+Just replace both .php scripts on your webserver with the newest files from this repo.

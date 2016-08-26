@@ -17,7 +17,7 @@ What you need to get this running:
 
  Create a database with [this  database dump] (/src/pokeGram_dump_230816.sql).
 
-###3. Upload bot scripts to webserver
+###3. Upload files to your webserver
 
  Create a folder on your webserver and upload these [files] (/src/webserver). Both .php files need to be accessible.
 ###4.  Configure your settings
