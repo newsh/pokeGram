@@ -133,7 +133,7 @@ function userPokemonFilterActivated($user, $pokemon_id) { //Returns true if dete
 	else 
 		return false;
 }
-function userDistanceFilterActivated($chat_id, $distance) { //Returns true if distance if beyond users set maximum distance.
+function userDistanceFilterActivated($chat_id, $walkingDistance, $pokemonLat, $pokemonLong) { //Returns true if distance if beyond users set maximum distance.
 	$db = new PDO ( DSN . ';dbname=' . dbname, username, password );
 	$stmt = $db->prepare("SELECT distance_limit FROM user_data WHERE chat_id LIKE :chat_id");
 	$stmt->bindValue(':chat_id', $chat_id);
@@ -141,11 +141,53 @@ function userDistanceFilterActivated($chat_id, $distance) { //Returns true if di
 	
 	$distanceLimitFromDb = $stmt->fetch ( PDO::FETCH_COLUMN );
 	
-	if( $distance > $distanceLimitFromDb )
-		return true;
-	else 
+	if(isset($walkingDistance)) {
+		if( $walkingDistance > $distanceLimitFromDb ) {
+			return true;
+		}
+	}
+	else {
+		//Can't retrieve distance from api call. Use air line distance instead. This will only work if user gave his coordinates.
+		$airlineDistance = calcAirlineDistance($chat_id, $pokemonLat, $pokemonLong);
+		if( $airlineDistance > $distanceLimitFromDb ) {
+			return true;
+		} else
 		return false;
+	}
 	
+}
+function calcAirlineDistance($user, $latitudeTo, $longitudeTo, $earthRadius = 6371000) {
+	/**
+	 * - Taken from martinstoeckli @ stackoverflow (and modified to my needs).
+	 * Calculates the great-circle distance between two points, with
+	 * the Haversine formula.
+	 * @param float $latitudeFrom Latitude of start point in [deg decimal]
+	 * @param float $longitudeFrom Longitude of start point in [deg decimal]
+	 * @param float $latitudeTo Latitude of target point in [deg decimal]
+	 * @param float $longitudeTo Longitude of target point in [deg decimal]
+	 * @param float $earthRadius Mean earth radius in [m]
+	 * @return float Distance between points in [m] (same as earthRadius)
+	 */
+	
+	$userLocation = getUsersLocation($user);
+	$latitudeFrom = $userLocation["lat"];
+	$longitudeFrom = $userLocation["long"];
+	
+	if(!$latitudeFrom) //Can't calculate air distance, because user has not set his coordinates.
+		return;
+	
+	// convert from degrees to radians
+	$latFrom = deg2rad($latitudeFrom);
+	$lonFrom = deg2rad($longitudeFrom);
+	$latTo = deg2rad($latitudeTo);
+	$lonTo = deg2rad($longitudeTo);
+
+	$latDelta = $latTo - $latFrom;
+	$lonDelta = $lonTo - $lonFrom;
+
+	$angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
+			cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
+	return round($angle * $earthRadius); //Return distance in full meters only.
 }
 function userMuteFilterActivated($chat_id) {
 	$db = new PDO ( DSN . ';dbname=' . dbname, username, password );
@@ -168,10 +210,10 @@ function incrementApiCounter($chat_id) {
 	$stmt->execute();
 }
 function buildPreviewLink($pokemon_id) {//Returns url for pokemon's picture in web-preview.
-	//$url = "http://domainToYourPicsOrGifs";
-	//$url .= $pokemon_id . ".gif";  //Build link will look like "http://sprites.pokecheck.org/i/006.gif" with incoming id of '6'.
-	//return $url;
-	return ".";  //Returning empty string would cause 400:Bad request. 
+	$url = "http://newsh.de/youwerenotsupposedtobehere/";
+	$url .= $pokemon_id . ".gif";  //Build link will look like "http://sprites.pokecheck.org/i/006.gif" with incoming id of '6'.
+	return $url;
+
 }
 function getPokemonsNameById($pokemon_id, $lang) { //Returns Pokemons name in user's language by Id.
 	
@@ -302,10 +344,15 @@ if(isInBoundaries($data)) {  //Only continue to parse incoming data when it's a 
 				
 							$messageSendToUser = "<b>$pokemonName</b> spotted <b>$distance". "m</b> away.%0A\"$address\"<a href=\"$previewLink\">%0A\xf0\x9f\x95\x91</a> Disappears at <b>$disappearTime</b>.%0A$travelTime"; //Build Message here
 				
-				} else { //User has no API Key. Build message without distance and Traveltime
-					$messageSendToUser = "<b>$pokemonName</b> spotted.%0A$address.<a href=\"$previewLink\">%0A\xf0\x9f\x95\x91</a> Disappears at <b>$disappearTime</b>.";
+				} else { //User has no API Key. Build message without Traveltime.
+					$messageSendToUser = "<b>$pokemonName</b> spotted.";
+					$distance = calcAirlineDistance($user, $latitude, $longitude); // Calculate air distance (instead of walkingdistance) - only works if user gave his coordinates.
+					
+					if($distance)
+						$messageSendToUser = "<b>$pokemonName</b> spotted<b> $distance" ."m</b> away.";
+					$messageSendToUser .= "%0A$address.<a href=\"$previewLink\">%0A\xf0\x9f\x95\x91</a> Disappears at <b>$disappearTime</b>.";
 				}
-				if(!(userDistanceFilterActivated($user, $distance))) { //Only send message when Pokemon is near enough - according to users distance filter. This will always be true if no location is set by user.
+				if(!(userDistanceFilterActivated($user, $distance, $latitude, $longitude))) { //Only send message when Pokemon is near enough - according to users distance filter. This will always be true if no location is set by user.
 				
 					
 					$seeMapInlineBtn = buildInlineBtn($latitude, $longitude, $pokemon_id, $userLang, $disappearTime);

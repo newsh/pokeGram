@@ -1,4 +1,5 @@
 <?php
+
 define ( 'BOT_TOKEN', 'XXXX' );  //Get this from @BotFather by typing /token.
 define ( 'API_URL', 'https://api.telegram.org/bot' . BOT_TOKEN . '/' );
 define ( 'WEBHOOK_ADDRESS', 'Your webhook for handler goes here if wished'); //Put URL of your telegramHandler.php here -if wished. It will help others to link their scanners.
