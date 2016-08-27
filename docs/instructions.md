@@ -36,4 +36,22 @@ type `/initdb` into the chat, hit send. You will receive a confirmation in case 
 
 Type /start again to receive notifications for pokemons like a regular user.
 ###6. Spread the word!
- Add URL of your `telegramHandler.php` file to any scanner's webhook. Found in `/config/config.ini`.
+ Add URL of your `telegramHandler.php` file to any scanner's webhook. Found in `/config/config.ini`.  
+ 
+##Further bot customization  
+Further bot customization can be done with [@botfather's](https://telegram.me/BotFather) help.  
+-- `/setuserpic` set a user pic for your bot  
+
+-- `/setdescription` set up a text every user can read when first starting your bot. You can place your contact info here if you wish. Just in case someone wants to share his scanner data.  
+-- `/setcommands` make your bot easier to navigate by adding preset commands. They will appear when starting to type `"/"`. You can paste this list when asked to give your commands: 
+
+`status - see bot's current status`  
+`alarmson - turn alarms on`  
+`alarmsoff - turn alarms off`   
+`hidecommon - hide all common Pokemons`  
+`unhideall - unhide all pokemon`  
+`apion - personal api key will be used`  
+`apioff - personal api key will not be used`  
+  
+    
+*All changes can take some time to update. Removing and re-adding bot to contacts can help too.*

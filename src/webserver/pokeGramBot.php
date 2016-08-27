@@ -506,15 +506,15 @@ function processMessage($message) {  //Process incoming message.
 			setAlarm($chat_id, 0);
 			messageUser($chat_id, "All alarms turned ON!");
 		}
-		else if($text === "/onlyRare") {
+		else if($text === "/hidecommon") {
 			hidePokemonInBulk($chat_id);
 			showPokemonFilter($chat_id , "Common pokemons are now hidden.%0ADon't agree with filter settings? You can always customize them as you wish. You can also /unhideAll.");
 		}
-		else if($text === "/unhideAll") {
+		else if($text === "/unhideall") {
 			unhideAllPokemon($chat_id);
 			showPokemonFilter($chat_id , "All Pokemons are now unhidden.");
 		}
-		else if($text === "/api") {
+		else if($text === "/apicount") {
 			messageUser($chat_id, "<pre>" . getApiCounter($chat_id) . "/2500 API Usage.</pre>");
 		}
 		else if($text === "map") {
