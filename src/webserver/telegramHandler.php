@@ -193,8 +193,9 @@ function calcAirlineDistance($user, $latitudeTo, $longitudeTo, $earthRadius = 63
 }
 function userMuteFilterActivated($chat_id) {
 	$db = new PDO ( DSN . ';dbname=' . dbname, username, password );
-	$stmt = $db->prepare("SELECT mute FROM bot_user_map WHERE chat_id LIKE :chat_id");
+	$stmt = $db->prepare("SELECT mute FROM bot_user_map WHERE chat_id LIKE :chat_id AND bot_id LIKE :bot_id");
 	$stmt->bindValue(':chat_id', $chat_id);
+	$stmt->bindValue(':bot_id', getTelegramsBotId());
 	$stmt->execute();
 	$mute = $stmt->fetch ( PDO::FETCH_COLUMN);
 	
