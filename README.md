@@ -14,10 +14,13 @@ The more scanners the bot is linked with, the better it becomes.
 ## Features
 * Receive a message for spotted Pokemon including street name, how far away it is, time to get there (by bike or foot), time till it disappears
 * Request a map of Pokemons position
-* Add pokemon to your filter and don't get notifications for them
+* Add pokemon to your filter to disable notifications
 * Set a distance limit and don't be notified of pokemon out of your reach
 * Set a language for Pokemon's names. Including English, German, French, Japanese
-* and more
+* and more  
+
+_Configuring the bot affects only the user himself. All settings are personalized and don't change the bot's behaviour for other users._  
+
 
 ## Preview
 To see an example of this bot in action you can simply add [@PokegramBerlinBot](https://telegram.me/PokegramBerlinBot) to your Telegram contacts.
