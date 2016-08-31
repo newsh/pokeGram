@@ -7,7 +7,7 @@ define ( 'DSN', 'mysql:host='.$ini_array['mysql:host'] );
 define ( 'dbname', $ini_array['dbname'] );
 define ( 'username', $ini_array['username'] );
 define ( 'password', $ini_array['password'] );
-define ( 'WEBHOOK_ADDRESS', $ini_array['WEBHOOK_ADDRESS']);
+//define ( 'WEBHOOK_ADDRESS', $ini_array['WEBHOOK_ADDRESS']); //Not needed as of right now.
 
 function exec_curl_request($handle) {
 	$response = curl_exec ( $handle );
@@ -73,32 +73,6 @@ function apiRequest($method, $parameters) {
 	
 	return exec_curl_request ( $handle );
 }
-function apiRequestJson($method, $parameters) {
-	if (! is_string ( $method )) {
-		error_log ( "Method name must be a string\n" );
-		return false;
-	}
-	
-	if (! $parameters) {
-		$parameters = array ();
-	} else if (! is_array ( $parameters )) {
-		error_log ( "Parameters must be an array\n" );
-		return false;
-	}
-	
-	$parameters ["method"] = $method;
-	
-	$handle = curl_init ( API_URL );
-	curl_setopt ( $handle, CURLOPT_RETURNTRANSFER, true );
-	curl_setopt ( $handle, CURLOPT_CONNECTTIMEOUT, 5 );
-	curl_setopt ( $handle, CURLOPT_TIMEOUT, 60 );
-	curl_setopt ( $handle, CURLOPT_POSTFIELDS, json_encode ( $parameters ) );
-	curl_setopt ( $handle, CURLOPT_HTTPHEADER, array (
-			"Content-Type: application/json" 
-	) );
-	
-	return exec_curl_request ( $handle );
-}
 function getTelegramsBotId(){
 	$db = new PDO ( DSN . ';dbname=' . dbname, username, password );
 	$botId = $db->query ("SELECT id FROM telegram_bot WHERE bot_token LIKE '" . BOT_TOKEN . "'")->fetch(PDO::FETCH_COLUMN);
@@ -129,6 +103,21 @@ function setTravelMode($chat_id , $mode) {
 	$stmt->bindValue(':chat_id', $chat_id);
 	$stmt->execute();
 }
+function getUserPokemonSorting($chat_id){
+	$db = new PDO ( DSN . ';dbname=' . dbname, username, password );
+	$stmt = $db->prepare("SELECT pokemonSortFlag FROM user_data WHERE chat_id = :chat_id");
+	$stmt->bindValue(':chat_id', $chat_id);
+	$stmt->execute();
+	$pokemonSortFlag = $stmt->fetch( PDO::FETCH_COLUMN);
+	return $pokemonSortFlag;
+}
+function setUserPokemonSorting($chat_id, $sortingFlag){
+	$db = new PDO ( DSN . ';dbname=' . dbname, username, password );
+	$stmt = $db->prepare("UPDATE user_data SET pokemonSortFlag = :sortingFlag WHERE user_data.chat_id = :chat_id");
+	$stmt->bindValue(':sortingFlag', $sortingFlag);
+	$stmt->bindValue(':chat_id', $chat_id);
+	$stmt->execute();
+}
 function showPokemonFilter($chat_id , $text) {  //Shows a text and custom keyboard to user with his personal pokemon filter settings. 
 	$keyBoardOfPokemons = array (  //This array represents all Pokemons. Only "Return" button added yet.
 			'keyboard' => array (
@@ -147,7 +136,11 @@ function showPokemonFilter($chat_id , $text) {  //Shows a text and custom keyboa
 	$hiddenPokemonIdList = $stmt->fetchAll(PDO::FETCH_COLUMN); //1. Get id list of user's hidden pokemons.
 	
 	$language = getUserLanguage($chat_id);
-	$resultArray = $db->query ("SELECT id, " .$language. " from pokemon_localization GROUP BY $language"); //2. Get list of all pokemons names localized in user's language. Can't use prepared stmnt here, but its okay: gets sanitized in getUserLanguage() funtcion.
+	$pokemonSortFlag = getUserPokemonSorting($chat_id);
+	if($pokemonSortFlag == 0)
+		$resultArray = $db->query ("SELECT id, " .$language. " from pokemon_localization GROUP BY $language"); //2. Get list of all pokemons names localized in user's language. Can't use prepared stmnt here, but its okay: gets sanitized in getUserLanguage() funtcion.
+	else if($pokemonSortFlag == 1)
+		$resultArray = $db->query ("SELECT id, " .$language. " from pokemon_localization");
 	$rows = $resultArray->fetchAll();
 	
 	//3. Build keyboard with all Pokemons and user's current filter settings.
@@ -517,9 +510,6 @@ function processMessage($message) {  //Process incoming message.
 		else if($text === "/apicount") {
 			messageUser($chat_id, "<pre>" . getApiCounter($chat_id) . "/2500 API Usage.</pre>");
 		}
-		else if($text === "map") {
-			messageUser($chat_id, "http://2jtwu0u3eqkmccpt.myfritz.net:5000");
-		}
 		else if($text === "Language" || $text === "/language") {
 			btnSetLanguagePressed($chat_id);
 		}
@@ -574,8 +564,13 @@ function processMessage($message) {  //Process incoming message.
 		else if($text == "/status") {
 			showStatus($chat_id);
 		}
-		else if($text == "/hidebulk") { 
-			hidePokemonInBulk($chat_id);
+		else if($text == "/sortbyid") {
+			setUserPokemonSorting($chat_id, 1);
+			showPokemonFilter($chat_id , "Pokemon are now sorted by <b>id</b>.");
+		}
+		else if($text == "/sortbyname") {
+			setUserPokemonSorting($chat_id, 0);
+			showPokemonFilter($chat_id , "Pokemon are now sorted by <b>name</b>.");
 		}
 	}
 	else {//User sends anything but text msg
