@@ -48,10 +48,12 @@ Further bot customization can be done with [@botfather's](https://telegram.me/Bo
 `status - see bot's current status`  
 `alarmson - turn alarms on`  
 `alarmsoff - turn alarms off`   
-`hidecommon - hide all common Pokemons`  
+`hidecommon - hide all common pokemon`  
 `unhideall - unhide all pokemon`  
 `apion - personal api key will be used`  
 `apioff - personal api key will not be used`  
+`sortbyid - sort pokemon by id`  
+`sortbyname - sort pokemon by name`
   
     
 *All changes can take some time to update. Removing and re-adding bot to contacts can help too.*
