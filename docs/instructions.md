@@ -15,7 +15,7 @@ What you need to get this running:
 
 ###2. Set up database
 
- Create a database with [this  database dump] (/src/pokeGram_dump_230816.sql).
+ Create a database with [this  .sql file] (/src/).
 
 ###3. Upload files to your webserver
 
