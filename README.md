@@ -23,7 +23,7 @@ _Configuring the bot affects only the user himself. All settings are personalize
 
 
 ## Preview
-To see an example of this bot in action you can simply add [@PokegramBerlinBot](https://telegram.me/PokegramBerlinBot) to your Telegram contacts.
+~~To see an example of this bot in action you can simply add [@PokegramBerlinBot](https://telegram.me/PokegramBerlinBot) to your Telegram contacts.~~
 
 
  ![picture2 of telegram_bot](http://i.imgur.com/OkdZGvO.jpg) ![picture3 of telegram_bot](http://i.imgur.com/NubS9HJ.jpg)
@@ -32,7 +32,7 @@ To see an example of this bot in action you can simply add [@PokegramBerlinBot](
  ![picture1 of telegram_bot](http://i.imgur.com/vYFCmHO.jpg) ![picture4 of telegram_bot](http://i.imgur.com/X7420Jn.jpg)
 
 ## Installation
-See [instructions] (/docs/instructions.md) for a guide to get your own bot running.
+See [instructions](/docs/instructions.md) for a guide to get your own bot running.
 
 ## Updating
 Once you have this chat bot running, updating is really easy.
