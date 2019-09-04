@@ -87,7 +87,7 @@ function showSettings($chat_id, $text) {
 	);
 }
 function btnSetPokemonFilterPressed($chat_id) {
-	showPokemonFilter($chat_id , "Press Pokemons you want to hide or unhide.");
+    showPokemonGenSelection($chat_id);
 }
 function btnSetTravelModePressed($chat_id) {
 	apiRequest( "sendMessage", array (
@@ -118,14 +118,49 @@ function setUserPokemonSorting($chat_id, $sortingFlag){
 	$stmt->bindValue(':chat_id', $chat_id);
 	$stmt->execute();
 }
-function showPokemonFilter($chat_id , $text) {  //Shows a text and custom keyboard to user with his personal pokemon filter settings. 
+function showPokemonGenSelection($chat_id) {
+    $keyboard = array (
+        'keyboard' => array (
+            array("Gen 1 - Kanto"),
+            array("Gen 2 - Johto"),
+            array("Gen 3 - Hoenn"),
+            array("Gen 4 - Sinno"),
+            array("Return ↩️")
+        ),
+        'resize_keyboard' => false,
+    );
+    apiRequest ( "sendMessage", array (
+        'chat_id' => $chat_id,
+        'parse_mode' => 'HTML',
+        'text' => "Please select a gen.",
+        'reply_markup' => $keyboard
+    ) );
+}
+function showPokemonFilter($gen, $chat_id , $text) {  //Shows a text and custom keyboard to user with his personal pokemon filter settings. 
 	$keyBoardOfPokemons = array (  //This array represents all Pokemons. Only "Return" button added yet.
 			'keyboard' => array (
 					array("Return \xe2\x86\xa9\xef\xb8\x8f")
 			),
 			'resize_keyboard' => false,
 	);
-	
+	switch($gen) {
+	    case "Gen 1":
+	        $idStart = 1;
+	        $idEnd = 151;
+	        break;
+	    case "Gen 2":
+	        $idStart = 152;
+	        $idEnd = 251;
+	        break;
+	    case "Gen 3":
+	        $idStart = 252;
+	        $idEnd = 386;
+	        break;
+	    case "Gen 4":
+	        $idStart = 387;
+	        $idEnd = 493;
+	        break;
+	}
 	$db = new PDO ( DSN . ';dbname=' . dbname, username, password );
 	
 	$hiddenPokemonIdList = array();
@@ -138,21 +173,19 @@ function showPokemonFilter($chat_id , $text) {  //Shows a text and custom keyboa
 	$language = getUserLanguage($chat_id);
 	$pokemonSortFlag = getUserPokemonSorting($chat_id);
 	if($pokemonSortFlag == 0)
-		$resultArray = $db->query ("SELECT id, " .$language. " from pokemon_localization GROUP BY $language"); //2. Get list of all pokemons names localized in user's language. Can't use prepared stmnt here, but its okay: gets sanitized in getUserLanguage() funtcion.
+		$resultArray = $db->query ("SELECT id, " .$language. " from pokemon_localization WHERE id BETWEEN $idStart AND $idEnd GROUP BY $language"); //2. Get list of all pokemons names localized in user's language. Can't use prepared stmnt here, but its okay: gets sanitized in getUserLanguage() funtcion.
 	else if($pokemonSortFlag == 1)
-		$resultArray = $db->query ("SELECT id, " .$language. " from pokemon_localization");
+		$resultArray = $db->query ("SELECT id, " .$language. " from pokemon_localization WHERE id BETWEEN $idStart AND $idEnd");
 	$rows = $resultArray->fetchAll();
 	
 	//3. Build keyboard with all Pokemons and user's current filter settings.
 	foreach($rows as $pokemonLocalized) {
-		if($pokemonLocalized['id']<=151) { //Only push pokemon with id 0-151 on keyboard. Thus far only Gen1 pokemons are released ingame. This needs to be reworked eitehr way. Doesnt work anymore when more pokemons are relaesed, since length of url is limited. Might try inlinekeyboard with paging. 
-			$btnText = $pokemonLocalized[$language];
-			if(in_array($pokemonLocalized['id'] , $hiddenPokemonIdList ))
-				$btnText = "\xf0\x9f\x94\x95" . $btnText; //Add  bell deactivated bell-emoji before pokemons name.
-			else 
-				$btnText = "\xf0\x9f\x94\x94" . $btnText; //Add bell activated bell-emoji before pokemons name.
-			array_push($keyBoardOfPokemons['keyboard'],array($btnText));
-		}
+    	$btnText = $pokemonLocalized[$language];
+    	if(in_array($pokemonLocalized['id'] , $hiddenPokemonIdList ))
+    		$btnText = "\xf0\x9f\x94\x95" . $btnText; //Add  bell deactivated bell-emoji before pokemons name.
+    	else 
+    		$btnText = "\xf0\x9f\x94\x94" . $btnText; //Add bell activated bell-emoji before pokemons name.
+    	array_push($keyBoardOfPokemons['keyboard'],array($btnText));
 	}
 	array_push($keyBoardOfPokemons['keyboard'],array("Return \xe2\x86\xa9\xef\xb8\x8f"));
 	
@@ -476,17 +509,21 @@ function processMessage($message) {  //Process incoming message.
 		else if($text === "\xf0\x9f\x94\x94 Pokemon Filter \xf0\x9f\x94\x94" || $text == "/hidepokemon") {
 			btnSetPokemonFilterPressed($chat_id);
 		}
+		else if(substr($text,0,3) === "Gen") {
+		    showPokemonFilter(substr($text,0,5), $chat_id , "Press Pokemons you want to hide or unhide.");
+		}
 		else if (strpos ( $text, "\xf0\x9f\x94\x95" ) === 0) {  //Used for pokemon filter menue. User is trying to unmute a pokemon. This is triggered when first symbol on pressed button is a DEACTIVATED bell-emoji. 
 														
 			$pokemonName = str_replace(array("\xf0\x9f\x94\x95"),'', $text); //Remove DEACTIVATED bell-emoji.
 			unhidePokemon($pokemonName , $chat_id);
-			showPokemonFilter($chat_id , "<b>$pokemonName</b> is not hidden anymore. You will be notified when it appears.");  //Shows updated keyboard.
+			messageUser($chat_id, "<b>$pokemonName</b> is not hidden anymore. You will be notified when it appears.");
+			showPokemonGenSelection($chat_id);
 		}
 		else if (strpos ( $text, "\xf0\x9f\x94\x94" ) === 0) {  //Used for pokemon filter menue. User is trying to mute a pokemon. This is triggered when first symbol on pressed button is a ACTIVATED bell-emoji.
 			$pokemonName = str_replace(array("\xf0\x9f\x94\x94"),'', $text); //Remove ACTIVATED bell-emoji.
 			hidePokemon($pokemonName, $chat_id);
-			showPokemonFilter($chat_id , "<b>$pokemonName</b> is now hidden. I won't send any notification when it appears.");
-		
+			messageUser($chat_id, "<b>$pokemonName</b> is now hidden. I won't send any notification when it appears.");
+			showPokemonGenSelection($chat_id);
 		}
 		else if($text === "\xf0\x9f\x9a\xa9 Distance Limit \xf0\x9f\x9a\xa9") {
 			btnSetDistanceLimitPressed($chat_id);
@@ -501,11 +538,11 @@ function processMessage($message) {  //Process incoming message.
 		}
 		else if($text === "/hidecommon") {
 			hidePokemonInBulk($chat_id);
-			showPokemonFilter($chat_id , "Common pokemons are now hidden.%0ADon't agree with filter settings? You can always customize them as you wish. You can also /unhideAll.");
+			messageUser($chat_id , "Common pokemons are now hidden.%0ADon't agree with filter settings? You can always customize them as you wish. You can also /unhideAll.");
 		}
 		else if($text === "/unhideall") {
 			unhideAllPokemon($chat_id);
-			showPokemonFilter($chat_id , "All Pokemons are now unhidden.");
+			messageUser($chat_id , "All Pokemons are now unhidden.");
 		}
 		else if($text === "/apicount") {
 			messageUser($chat_id, "<pre>" . getApiCounter($chat_id) . "/2500 API Usage.</pre>");
@@ -566,11 +603,11 @@ function processMessage($message) {  //Process incoming message.
 		}
 		else if($text == "/sortbyid") {
 			setUserPokemonSorting($chat_id, 1);
-			showPokemonFilter($chat_id , "Pokemon are now sorted by <b>id</b>.");
+			messageUser($chat_id , "Pokemon are now sorted by <b>id</b>.");
 		}
 		else if($text == "/sortbyname") {
 			setUserPokemonSorting($chat_id, 0);
-			showPokemonFilter($chat_id , "Pokemon are now sorted by <b>name</b>.");
+			messageUser($chat_id , "Pokemon are now sorted by <b>name</b>.");
 		}
 	}
 	else {//User sends anything but text msg
