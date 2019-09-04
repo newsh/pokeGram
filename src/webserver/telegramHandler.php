@@ -8,12 +8,20 @@ define ( 'DSN', 'mysql:host='.$ini_array['mysql:host'] );
 define ( 'dbname', $ini_array['dbname'] ); 
 define ( 'username', $ini_array['username'] );
 define ( 'password', $ini_array['password'] );
+define ( 'ADMIN_CHAT_ID', $ini_array['ADMIN_CHAT_ID']);
 define ( 'MAXLATITUDE', $ini_array['MAXLATITUDE']);
 define ( 'MINLATITUDE', $ini_array['MINLATITUDE']);
 define ( 'MAXLONGITUDE', $ini_array['MAXLONGITUDE']);
 define ( 'MINLONGITUDE', $ini_array['MINLONGITUDE']);
 define ( 'TIME_OFFSET', 2); //Add or substract (place negative number) time in hours if disappear time doesn't match your region. ('2'=> Timezone berlin/germany).
 
+function debug($string) {
+    apiRequest ( "sendMessage", array (
+        'chat_id' => ADMIN_CHAT_ID, //Your own chat_id goes here
+        'parse_mode' => 'HTML',
+        "text" => $string
+    ));
+}
 function exec_curl_request($handle) {
 	$response = curl_exec ( $handle );
 
@@ -305,7 +313,9 @@ function buildInlineBtn($latitude, $longitude, $pokemon_id, $userLang, $disappea
 $data = json_decode(file_get_contents('php://input'), true);
 
 if(isInBoundaries($data)) {  //Only continue to parse incoming data when it's a pokemon from within specified min/max lat/long values. 
-	$encounter_id = $data["message"]["encounter_id"];
+    debug($data);
+    
+    $encounter_id = $data[0]["message"]["encounter_id"];
 	$db = new PDO ( DSN . ';dbname=' . dbname, username, password );
 	$stmt = $db->prepare("INSERT INTO pokemons (encounter_id, ipHash, bot_id) VALUES (:encounter_id, :ipHash, :bot_id)"); //Try inserting scanned pokemon. Returns false if already in db. (Constraint is set).
 	$stmt->bindValue(':encounter_id', $encounter_id);
@@ -314,10 +324,10 @@ if(isInBoundaries($data)) {  //Only continue to parse incoming data when it's a 
 	$result = $stmt->execute();
 	if($result) { //Found Pokemon matches boundaries and DB query returned true. New pokemon found! Only then start retrieving data.
 		$usersArray = getAllUsersArray();
-		$pokemon_id = $data["message"]["pokemon_id"];
-		$latitude = $data["message"]["latitude"];
-		$longitude = $data["message"]["longitude"];
-		$disappearTime = date('H:i:s', $data["message"]["disappear_time"]); //Alternative: time_until_hidden_ms
+		$pokemon_id = $data[0]["message"]["pokemon_id"];
+		$latitude = $data[0]["message"]["latitude"];
+		$longitude = $data[0]["message"]["longitude"];
+		$disappearTime = date('H:i:s', $data[0]["message"]["disappear_time"]); //Alternative: time_until_hidden_ms
 		$disappearTime =  strtotime($disappearTime)+TIME_OFFSET*(3600); //Add +2hrs for Germany.
 		$disappearTime = date('H:i:s', $disappearTime);
 		
