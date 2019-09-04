@@ -313,80 +313,81 @@ function buildInlineBtn($latitude, $longitude, $pokemon_id, $userLang, $disappea
 $data = json_decode(file_get_contents('php://input'), true);
 
 if(isInBoundaries($data)) {  //Only continue to parse incoming data when it's a pokemon from within specified min/max lat/long values. 
-    debug($data);
-    
-    $encounter_id = $data[0]["message"]["encounter_id"];
-	$db = new PDO ( DSN . ';dbname=' . dbname, username, password );
-	$stmt = $db->prepare("INSERT INTO pokemons (encounter_id, ipHash, bot_id) VALUES (:encounter_id, :ipHash, :bot_id)"); //Try inserting scanned pokemon. Returns false if already in db. (Constraint is set).
-	$stmt->bindValue(':encounter_id', $encounter_id);
-	$stmt->bindValue(':ipHash', md5($_SERVER['REMOTE_ADDR']));
-	$stmt->bindValue(':bot_id', getTelegramsBotId());
-	$result = $stmt->execute();
-	if($result) { //Found Pokemon matches boundaries and DB query returned true. New pokemon found! Only then start retrieving data.
-		$usersArray = getAllUsersArray();
-		$pokemon_id = $data[0]["message"]["pokemon_id"];
-		$latitude = $data[0]["message"]["latitude"];
-		$longitude = $data[0]["message"]["longitude"];
-		$disappearTime = date('H:i:s', $data[0]["message"]["disappear_time"]); //Alternative: time_until_hidden_ms
-		$disappearTime =  strtotime($disappearTime)+TIME_OFFSET*(3600); //Add +2hrs for Germany.
-		$disappearTime = date('H:i:s', $disappearTime);
-		
-		$messageSendToUser = ""; //User will receive this message for incoming pokemon.
-		
-		$address = getAddress($latitude, $longitude); //Name of the Street where the Pokemon can be found.
-		$previewLink = buildPreviewLink($pokemon_id);
-		
-		foreach($usersArray as $user) { //Now the message a user receives get's individually crafted.
-			if(!(userMuteFilterActivated($user)) && !(userPokemonFilterActivated($user, $pokemon_id)) ) {  //Incoming Pokemom was not hidden by user AND user has his global mute settings not turned on.
-				
-				$userLang = getUserLanguage($user);
-				$pokemonName = getPokemonsNameById($pokemon_id, $userLang);
-				
-				if(userHasActiveApiKeyAndLocationSet($user)) { //User is using API and location set? Build detailed message with distance and traveltime.
-				
-					$travelMode = getTravelMode($user); //Retrieves user's travel settings. Foot/Bike
-					$travelData = getTravelData($user, $latitude, $longitude, $travelMode); //Retrieves distance and travel time according to user settings from google's distrance matrix.
-				
-					$distance = $travelData->rows[0]->elements[0]->distance->value;
-					$travelTime = $travelData->rows[0]->elements[0]->duration->text;
-					if($travelMode == 1)
-						$travelTime = "\xf0\x9f\x8f\x83" . $travelTime; //Add running man emoji
-						else if($travelMode == 2)
-							$travelTime = "\xf0\x9f\x9a\xb2 ". $travelTime; //Add bycicle emoji
-				
-							$messageSendToUser = "<b>$pokemonName</b> spotted <b>$distance". "m</b> away.%0A\"$address\"<a href=\"$previewLink\">%0A\xf0\x9f\x95\x91</a> Disappears at <b>$disappearTime</b>.%0A$travelTime"; //Build Message here
-				
-				} else { //User has no API Key. Build message without Traveltime.
-					$messageSendToUser = "<b>$pokemonName</b> spotted.";
-					$distance = calcAirlineDistance($user, $latitude, $longitude); // Calculate air distance (instead of walkingdistance) - only works if user gave his coordinates.
-					
-					if($distance)
-						$messageSendToUser = "<b>$pokemonName</b> spotted<b> $distance" ."m</b> away.";
-					$messageSendToUser .= "%0A$address.<a href=\"$previewLink\">%0A\xf0\x9f\x95\x91</a> Disappears at <b>$disappearTime</b>.";
-				}
-				if(!(userDistanceFilterActivated($user, $distance, $latitude, $longitude))) { //Only send message when Pokemon is near enough - according to users distance filter. This will always be true if no location is set by user.
-				
-					
-					$seeMapInlineBtn = buildInlineBtn($latitude, $longitude, $pokemon_id, $userLang, $disappearTime);
-					
-					
-					apiRequest ( "sendMessage", array (
-							'chat_id' => $user,
-							'parse_mode' => 'HTML',
-							'text' => $messageSendToUser,
-							'reply_markup' => array('inline_keyboard' => $seeMapInlineBtn)
-							)
-					);
-				} //else: Pokemon's distance exceeds users distance filter!	TODO: If difference is really huge, user is not in the area, should probably /alarmsoff, otherwise his API Key limit gets burned.
-				
-				
-				
-				
-			}//else: User muted all alarms or Pokemon was hidden, so no message send.
-				
-		}
-				
-	}
-	else; //Insert failed, most likely because alraedy in db. Do nothing then.
+    //debug($data);
+    $db = new PDO ( DSN . ';dbname=' . dbname, username, password );
+    $usersArray = getAllUsersArray();
+    foreach ($data as $element) {
+        $encounter_id = $element["message"]["encounter_id"];
+    	$stmt = $db->prepare("INSERT INTO pokemons (encounter_id, ipHash, bot_id) VALUES (:encounter_id, :ipHash, :bot_id)"); //Try inserting scanned pokemon. Returns false if already in db. (Constraint is set).
+    	$stmt->bindValue(':encounter_id', $encounter_id);
+    	$stmt->bindValue(':ipHash', md5($_SERVER['REMOTE_ADDR']));
+    	$stmt->bindValue(':bot_id', getTelegramsBotId());
+    	$result = $stmt->execute();
+    	if($result) { //Found Pokemon matches boundaries and DB query returned true. New pokemon found! Only then start retrieving data.
+    		$pokemon_id = $element["message"]["pokemon_id"];
+    		$latitude = $element["message"]["latitude"];
+    		$longitude = $element["message"]["longitude"];
+    		$disappearTime = date('H:i:s', $element["message"]["disappear_time"]); //Alternative: time_until_hidden_ms
+    		$disappearTime =  strtotime($disappearTime);
+    		$disappearTime = date('H:i:s', $disappearTime);
+    		
+    		$messageSendToUser = ""; //User will receive this message for incoming pokemon.
+    		
+    		$address = getAddress($latitude, $longitude); //Name of the Street where the Pokemon can be found.
+    		$previewLink = buildPreviewLink($pokemon_id);
+    		
+    		foreach($usersArray as $user) { //Now the message a user receives get's individually crafted.
+    			if(!(userMuteFilterActivated($user)) && !(userPokemonFilterActivated($user, $pokemon_id)) ) {  //Incoming Pokemom was not hidden by user AND user has his global mute settings not turned on.
+    				
+    				$userLang = getUserLanguage($user);
+    				$pokemonName = getPokemonsNameById($pokemon_id, $userLang);
+    				
+    				if(userHasActiveApiKeyAndLocationSet($user)) { //User is using API and location set? Build detailed message with distance and traveltime.
+    				
+    					$travelMode = getTravelMode($user); //Retrieves user's travel settings. Foot/Bike
+    					$travelData = getTravelData($user, $latitude, $longitude, $travelMode); //Retrieves distance and travel time according to user settings from google's distrance matrix.
+    				
+    					$distance = $travelData->rows[0]->elements[0]->distance->value;
+    					$travelTime = $travelData->rows[0]->elements[0]->duration->text;
+    					if($travelMode == 1)
+    						$travelTime = "\xf0\x9f\x8f\x83" . $travelTime; //Add running man emoji
+    						else if($travelMode == 2)
+    							$travelTime = "\xf0\x9f\x9a\xb2 ". $travelTime; //Add bycicle emoji
+    				
+    							$messageSendToUser = "<b>$pokemonName</b> spotted <b>$distance". "m</b> away.%0A\"$address\"<a href=\"$previewLink\">%0A\xf0\x9f\x95\x91</a> Disappears at <b>$disappearTime</b>.%0A$travelTime"; //Build Message here
+    				
+    				} else { //User has no API Key. Build message without Traveltime.
+    					$messageSendToUser = "<b>$pokemonName</b> spotted.";
+    					$distance = calcAirlineDistance($user, $latitude, $longitude); // Calculate air distance (instead of walkingdistance) - only works if user gave his coordinates.
+    					
+    					if($distance)
+    						$messageSendToUser = "<b>$pokemonName</b> spotted<b> $distance" ."m</b> away.";
+    					$messageSendToUser .= "%0A$address.<a href=\"$previewLink\">%0A\xf0\x9f\x95\x91</a> Disappears at <b>$disappearTime</b>.";
+    				}
+    				if(!(userDistanceFilterActivated($user, $distance, $latitude, $longitude))) { //Only send message when Pokemon is near enough - according to users distance filter. This will always be true if no location is set by user.
+    				
+    					
+    					$seeMapInlineBtn = buildInlineBtn($latitude, $longitude, $pokemon_id, $userLang, $disappearTime);
+    					
+    					
+    					apiRequest ( "sendMessage", array (
+    							'chat_id' => $user,
+    							'parse_mode' => 'HTML',
+    							'text' => $messageSendToUser,
+    							'reply_markup' => array('inline_keyboard' => $seeMapInlineBtn)
+    							)
+    					);
+    				} //else: Pokemon's distance exceeds users distance filter!	TODO: If difference is really huge, user is not in the area, should probably /alarmsoff, otherwise his API Key limit gets burned.
+    				
+    				
+    				
+    				
+    			}//else: User muted all alarms or Pokemon was hidden, so no message send.
+    				
+    		}
+    				
+        }
+    	else; //Insert failed, most likely because alraedy in db. Do nothing then.
+    }
 }
 ?>
