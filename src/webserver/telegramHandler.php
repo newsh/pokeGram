@@ -92,13 +92,11 @@ function getTelegramsBotId(){
 	$telegramBotId = $db->query ("SELECT id FROM telegram_bot WHERE bot_token LIKE '" . BOT_TOKEN . "'")->fetch(PDO::FETCH_COLUMN);
 	return $telegramBotId; 
 }
-function getAddress( $lat, $lng ) {   
-    
-	$URL = "http://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng";
-	
+function getAddress($chat_id, $lat, $lng ) {   
+    $apiKey = getUsersApiKey($chat_id);
+	$URL = "https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=$apiKey";
 	$response = file_get_contents( $URL );
 	$json = json_decode($response);
-	
 	
 	return $json->results[0]->address_components[1]->long_name . " " . $json->results[0]->address_components[0]->long_name;
 }
@@ -115,7 +113,6 @@ function getTravelData($chat_id, $latitude, $longitude, $mode) {
 	
 	$apiKey = getUsersApiKey($chat_id);
 	$urlAPI = "https://maps.googleapis.com/maps/api/distancematrix/json?origins=$userPosLat,$userPosLong&destinations=$latitude,$longitude&key=$apiKey&mode=$mode";
-	echo $urlAPI;
 	$response = file_get_contents($urlAPI);
 	incrementApiCounter($chat_id); //Tracking mechanism how many calls to google's maps matrix are made. Limit at 2,500 / day
 	$json = json_decode($response);
@@ -221,9 +218,9 @@ function incrementApiCounter($chat_id) {
 	$stmt->execute();
 }
 function buildPreviewLink($pokemon_id) {//Returns url for pokemon's picture in web-preview.
-	//$url = "http://domainToYourPicsOrGifs";
-	//$url .= $pokemon_id . ".gif";  //Build link will look like "http://domainToYourPicsOrGifs/006.gif" with incoming id of '6'.
-	return ".";
+    //$url = "http://domainToYourPicsOrGifs";
+    //$url .= $pokemon_id . ".gif";  //Build link will look like "http://domainToYourPicsOrGifs/006.gif" with incoming id of '6'.
+    return ".";
 }
 function getPokemonsNameById($pokemon_id, $lang) { //Returns Pokemons name in user's language by Id.
 	
@@ -333,7 +330,6 @@ if(isInBoundaries($data)) {  //Only continue to parse incoming data when it's a 
     		
     		$messageSendToUser = ""; //User will receive this message for incoming pokemon.
     		
-    		$address = getAddress($latitude, $longitude); //Name of the Street where the Pokemon can be found.
     		$previewLink = buildPreviewLink($pokemon_id);
     		
     		foreach($usersArray as $user) { //Now the message a user receives get's individually crafted.
@@ -343,18 +339,18 @@ if(isInBoundaries($data)) {  //Only continue to parse incoming data when it's a 
     				$pokemonName = getPokemonsNameById($pokemon_id, $userLang);
     				
     				if(userHasActiveApiKeyAndLocationSet($user)) { //User is using API and location set? Build detailed message with distance and traveltime.
-    				
+    				    $address = getAddress($user, $latitude, $longitude); //Name of the Street where the Pokemon can be found.
     					$travelMode = getTravelMode($user); //Retrieves user's travel settings. Foot/Bike
     					$travelData = getTravelData($user, $latitude, $longitude, $travelMode); //Retrieves distance and travel time according to user settings from google's distrance matrix.
     				
     					$distance = $travelData->rows[0]->elements[0]->distance->value;
     					$travelTime = $travelData->rows[0]->elements[0]->duration->text;
     					if($travelMode == 1)
-    						$travelTime = "\xf0\x9f\x8f\x83" . $travelTime; //Add running man emoji
-    						else if($travelMode == 2)
-    							$travelTime = "\xf0\x9f\x9a\xb2 ". $travelTime; //Add bycicle emoji
+    					   $travelTime = "\xf0\x9f\x8f\x83" . $travelTime; //Add running man emoji
+						else if($travelMode == 2)
+						  $travelTime = "\xf0\x9f\x9a\xb2 ". $travelTime; //Add bycicle emoji
     				
-    							$messageSendToUser = "<b>$pokemonName</b> spotted <b>$distance". "m</b> away.%0A\"$address\"<a href=\"$previewLink\">%0A\xf0\x9f\x95\x91</a> Disappears at <b>$disappearTime</b>.%0A$travelTime"; //Build Message here
+						$messageSendToUser = "<b>$pokemonName</b> spotted <b>$distance". "m</b> away.%0A\"$address\"<a href=\"$previewLink\">%0A\xf0\x9f\x95\x91</a> Disappears at <b>$disappearTime</b>.%0A$travelTime"; //Build Message here
     				
     				} else { //User has no API Key. Build message without Traveltime.
     					$messageSendToUser = "<b>$pokemonName</b> spotted.";
@@ -362,7 +358,7 @@ if(isInBoundaries($data)) {  //Only continue to parse incoming data when it's a 
     					
     					if($distance)
     						$messageSendToUser = "<b>$pokemonName</b> spotted<b> $distance" ."m</b> away.";
-    					$messageSendToUser .= "%0A$address.<a href=\"$previewLink\">%0A\xf0\x9f\x95\x91</a> Disappears at <b>$disappearTime</b>.";
+    					$messageSendToUser .= "%0A&#8204<a href=\"$previewLink\">%0A\xf0\x9f\x95\x91</a> Disappears at <b>$disappearTime</b>.";
     				}
     				if(!(userDistanceFilterActivated($user, $distance, $latitude, $longitude))) { //Only send message when Pokemon is near enough - according to users distance filter. This will always be true if no location is set by user.
     				
